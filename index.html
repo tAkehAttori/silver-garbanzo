@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注文入力システム</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .menu-item { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .controls { display: flex; align-items: center; gap: 15px; }
+        button { width: 40px; height: 40px; font-size: 20px; border: none; border-radius: 5px; background: #007bff; color: white; cursor: pointer; }
+        button:active { background: #0056b3; }
+        
+        /* リセットボタンのスタイル */
+        .btn-reset { width: 100%; height: 50px; background: #dc3545; color: white; font-weight: bold; font-size: 1.1rem; border-radius: 8px; margin-top: 20px; margin-bottom: 10px; border: none; cursor: pointer; }
+        .btn-reset:active { background: #a71d2a; }
+
+        .total-section { background: #343a40; color: white; padding: 20px; border-radius: 8px; }
+        .calc-row { margin-bottom: 10px; font-size: 1.2rem; }
+        input { width: 100px; font-size: 1.1rem; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        .change { color: #ffc107; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>★★★★注文入力★★★★</h2>
+    
+    <div id="menu-container"></div>
+
+    <button class="btn-reset" onclick="resetCart()">注文をリセット</button>
+
+    <div class="total-section">
+        <div class="calc-row">合計  金額: <span id="total-price">0</span> 円</div>
+        <div class="calc-row">預かり金額: <input type="number" id="payment" placeholder="0" oninput="updateChange()"> 円</div>
+        <hr>
+        <div class="calc-row">お釣り: <span id="change" class="change">0</span> 円</div>
+    </div>
+
+    <script>
+        const menuData = [
+            { id: 1, name: "生ﾋﾞｰﾙ(麒麟)", price: 600 },
+            { id: 2, name: "瓶びーる ｱｻﾋ", price: 800 },
+            { id: 3, name: "ﾉﾝｱﾙﾋﾞｰﾙ(ｱｻﾋ)", price: 500 },
+            { id: 4, name: "ﾊｲﾎﾞｰﾙ", price: 600 },
+            { id: 5, name: "ｼﾞﾝｼﾞｬｰﾊｲﾎﾞｰﾙ", price: 600 },
+            { id: 6, name: "ｺｰｸﾊｲ", price: 600 },
+            { id: 7, name: "ﾚﾓﾝｻﾜｰ", price: 500 },
+            { id: 8, name: "梅ｻﾜｰ", price: 500 },
+            { id: 9, name: "ｸﾞﾚｰﾌﾟｻﾜｰ", price: 500 },
+            { id: 10, name: "ｼｰｸｻﾜｰ", price: 500 },
+            { id: 11, name: "焼酎＋わりもの", price: 600 },
+            { id: 12, name: "ﾎﾞﾄﾙ 二階堂", price: 4000 },
+            { id: 13, name: "ﾎﾞﾄﾙ くろきり", price: 4000 },
+            { id: 14, name: "ﾎﾞﾄﾙ しろ", price: 4000 },
+            { id: 15, name: "ﾎﾞﾄﾙ きょうげつ", price: 3000 },
+            { id: 16, name: "ｾｯﾄ ｱｲｽ/水/緑茶/烏龍茶/炭酸水", price: 1000 },
+            { id: 17, name: "烏龍茶(ｿﾌﾄﾄﾞﾘﾝｸ)", price: 400 },
+            { id: 18, name: "緑茶(ｿﾌﾄﾄﾞﾘﾝｸ)", price: 400 },
+            { id: 19, name: "ｺｰﾗ(ｿﾌﾄﾄﾞﾘﾝｸ)", price: 400 },
+            { id: 20, name: "ｼﾞﾝｼﾞｬｰｴｰﾙ(ｿﾌﾄﾄﾞﾘﾝｸ)", price: 400 },
+            { id: 21, name: "ｱｲｽﾃｨ(ｿﾌﾄﾄﾞﾘﾝｸ)", price: 400 },
+            { id: 22, name: "ｺｰﾋｰ(ｿﾌﾄﾄﾞﾘﾝｸ)", price: 400 },
+            { id: 23, name: "たこわさ", price: 350 },
+            { id: 24, name: "うずらの卵", price: 350 },
+            { id: 25, name: "つけもの3種", price: 380 },
+            { id: 26, name: "ﾄﾏﾄｽﾗｲｽ", price: 300 },
+            { id: 27, name: "いか焼き", price: 430 },
+            { id: 28, name: "ﾁｰｽﾞｻﾗﾐ", price: 580 },
+            { id: 29, name: "しそきゅうり", price: 380 },
+            { id: 30, name: "えだまめ", price: 350 },
+            { id: 31, name: "たこから", price: 400 },
+            { id: 32, name: "ｻﾞﾝｷﾞ", price: 480 },
+            { id: 33, name: "めひかり", price: 550 },
+            { id: 34, name: "ﾁｰｽﾞ春巻き(2本)", price: 350 },
+            { id: 35, name: "ﾎﾟテトフライ", price: 400 },
+            { id: 36, name: "きまぐれｻﾗﾀﾞ", price: 530 },
+            { id: 37, name: "ﾋﾗﾔｰﾁｰ", price: 580 },
+            { id: 38, name: "そーめんﾁｬﾝﾌﾟﾙｰ", price: 580 },
+            { id: 39, name: "たこ焼き(6個) しお/ｿｰｽ", price: 550 },
+            { id: 40, name: "もも串(2本)", price: 550 },
+            { id: 41, name: "たこ焼き(6個) しお/ｿｰｽ", price: 550 },
+            { id: 42, name: "ｿｰｷそば", price: 850 },
+            { id: 43, name: "ﾀｺﾗｲｽ", price: 850 },
+            { id: 44, name: "ｺﾞｰﾔﾁｬﾝﾌﾟﾙｰ", price: 750 },
+            { id: 45, name: "ﾌｰﾁｬﾝﾌﾟﾙｰ", price: 700 },
+            { id: 46, name: "あさりの酒蒸し", price: 580 },
+            { id: 47, name: "小籠包", price: 400 },
+            { id: 48, name: "日替わりﾗﾝﾁA", price: 1200 },
+            { id: 49, name: "日替わりﾗﾝﾁB", price: 1200 },
+            { id: 50, name: "日替わりﾗﾝﾁC", price: 1200 }
+        ];
+
+        let cart = {};
+        menuData.forEach(item => cart[item.id] = 0);
+
+        const container = document.getElementById('menu-container');
+
+        menuData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'menu-item';
+            div.innerHTML = `
+                <div><strong>${item.name}</strong><br><small>${item.price}円</small></div>
+                <div class="controls">
+                    <button onclick="changeQty(${item.id}, -1)">-</button>
+                    <span id="qty-${item.id}">0</span>
+                    <button onclick="changeQty(${item.id}, 1)">+</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        function changeQty(id, delta) {
+            cart[id] = Math.max(0, cart[id] + delta);
+            document.getElementById(`qty-${id}`).innerText = cart[id];
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            menuData.forEach(item => {
+                total += item.price * cart[item.id];
+            });
+            document.getElementById('total-price').innerText = total.toLocaleString();
+            updateChange();
+        }
+
+        function updateChange() {
+            const total = parseInt(document.getElementById('total-price').innerText.replace(/,/g, ''));
+            const payment = parseInt(document.getElementById('payment').value) || 0;
+            const changeElement = document.getElementById('change');
+            
+            const change = payment - total;
+            if (payment === 0) {
+                changeElement.innerText = "0";
+            } else if (change < 0) {
+                changeElement.innerText = "足りません";
+            } else {
+                changeElement.innerText = change.toLocaleString();
+            }
+        }
+
+        function resetCart() {
+            if(!confirm("初期化")) return; // 間違えて押した時のための確認
+            
+            menuData.forEach(item => {
+                cart[item.id] = 0;
+                document.getElementById(`qty-${item.id}`).innerText = 0;
+            });
+            document.getElementById('payment').value = "";
+            calculateTotal();
+        }
+    </script>
+</body>
+</html>
